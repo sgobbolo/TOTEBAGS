@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToteScale - Atelier di Progettazione</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Cormorant Garamond', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            warm: '#FDF8F3',
+                            ink: '#3D342D',
+                            accent: '#C68E74',
+                            secondary: '#E9DCC9',
+                            highlight: '#B4C4B4',
+                            wood: '#8B5E3C',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-image: radial-gradient(#3D342D 0.5px, transparent 0.5px);
+            background-size: 30px 30px;
+            background-color: #FDF8F3;
+        }
+        .sartorial-grid {
+            background-image: 
+                linear-gradient(to right, rgba(61, 52, 45, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(61, 52, 45, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .mannequin-shadow {
+            filter: drop-shadow(0 15px 30px rgba(61, 52, 45, 0.2));
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #C68E74;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #E9DCC9;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-brand-ink font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useCallback } = React;
+
+        function App() {
+            const [height, setHeight] = useState(170);
+            const [style, setStyle] = useState("standard");
+            const [seamAllowance, setSeamAllowance] = useState(1.5);
+            const [showFabric, setShowFabric] = useState(false);
+            const [copied, setCopied] = useState(false);
+
+            const scale = 2.5;
+
+            const dimensions = useMemo(() => {
+                const base = height;
+                switch (style) {
+                    case "mini":
+                        return { width: Math.round(base * 0.15), height: Math.round(base * 0.14), handleDrop: Math.round(base * 0.08) };
+                    case "oversized":
+                        return { width: Math.round(base * 0.28), height: Math.round(base * 0.25), handleDrop: Math.round(base * 0.14) };
+                    default:
+                        return { width: Math.round(base * 0.22), height: Math.round(base * 0.20), handleDrop: Math.round(base * 0.12) };
+                }
+            }, [height, style]);
+
+            const fabricCuts = useMemo(() => {
+                const { width, height: bagHeight, handleDrop } = dimensions;
+                const sa = seamAllowance;
+                const hem = 3;
+                return [
+                    { name: "Pannelli Principali", width: width + (sa * 2), height: bagHeight + sa + hem, quantity: 2 },
+                    { name: "Manici", width: 8, height: (handleDrop * 2.5) + (sa * 2), quantity: 2 }
+                ];
+            }, [dimensions, seamAllowance]);
+
+            const copyToClipboard = () => {
+                const text = fabricCuts.map(c => `${c.name}: ${c.width.toFixed(1)} x ${c.height.toFixed(1)} cm (x${c.quantity})`).join('\n');
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                    });
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textArea);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                }
+            };
+
+            return (
+                <div className="p-4 md:p-8 flex flex-col items-center">
+                    <header className="max-w-4xl w-full mb-16 text-center space-y-6">
+                        <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-brand-accent bg-opacity-10 text-brand-accent text-[10px] font-bold tracking-[0.2em] uppercase border border-brand-accent border-opacity-20">
+                            Atelier di Progettazione
+                        </div>
+                        <h1 className="text-6xl md:text-8xl font-serif font-medium tracking-tighter">ToteScale</h1>
+                        <p className="text-xl text-brand-ink opacity-50 font-serif italic">"L'eleganza della misura, la precisione del taglio."</p>
+                    </header>
+
+                    <main className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                        <div className="lg:col-span-4 space-y-8">
+                            <div className="bg-white bg-opacity-90 backdrop-blur-md rounded-[32px] overflow-hidden shadow-2xl p-8 space-y-10">
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-sm font-bold uppercase tracking-widest opacity-60">Altezza Persona</label>
+                                        <span className="text-3xl font-serif font-bold text-brand-accent">{height} <span className="text-sm font-sans font-light opacity-40">cm</span></span>
+                                    </div>
+                                    <input type="range" min="140" max="210" value={height} onChange={(e) => setHeight(parseInt(e.target.value))} />
+                                </div>
+
+                                <div className="space-y-6">
+                                    <label className="text-sm font-bold uppercase tracking-widest opacity-60">Stile della Borsa</label>
+                                    <div className="grid grid-cols-3 bg-brand-secondary bg-opacity-30 p-1 rounded-xl">
+                                        {["mini", "standard", "oversized"].map(s => (
+                                            <button 
+                                                key={s}
+                                                onClick={() => setStyle(s)}
+                                                className={`py-2 rounded-lg text-sm transition-all ${style === s ? "bg-white text-brand-accent shadow-sm" : "opacity-50"}`}
+                                            >
+                                                {s.charAt(0).toUpperCase() + s.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-sm font-bold uppercase tracking-widest opacity-60">Margine Cucitura</label>
+                                        <span className="text-xl font-serif font-bold text-brand-accent">{seamAllowance} <span className="text-xs font-sans font-light opacity-40">cm</span></span>
+                                    </div>
+                                    <input type="range" min="0.5" max="3" step="0.1" value={seamAllowance} onChange={(e) => setSeamAllowance(parseFloat(e.target.value))} />
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={() => setShowFabric(!showFabric)}
+                                className="w-full py-6 bg-brand-ink text-brand-warm rounded-[24px] shadow-xl text-lg font-serif italic"
+                            >
+                                {showFabric ? "Nascondi Piano di Taglio" : "Calcola Taglio Tessuto"}
+                            </button>
+
+                            {showFabric && (
+                                <div className="bg-white bg-opacity-95 backdrop-blur-md rounded-[32px] shadow-2xl p-8 space-y-6 border-t-8 border-brand-highlight">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-2xl font-serif">Piano di Taglio</h3>
+                                        <button onClick={copyToClipboard} className="text-brand-accent">{copied ? "Copiato!" : "Copia"}</button>
+                                    </div>
+                                    {fabricCuts.map((cut, idx) => (
+                                        <div key={idx} className="p-4 bg-brand-highlight bg-opacity-10 rounded-2xl border border-brand-highlight border-opacity-20">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">{cut.name}</span>
+                                                <span className="text-[10px] font-bold text-brand-accent">x{cut.quantity}</span>
+                                            </div>
+                                            <div className="text-2xl font-serif text-brand-accent">
+                                                {cut.width.toFixed(1)} <span className="text-xs font-sans opacity-30">cm</span> × {cut.height.toFixed(1)} <span className="text-xs font-sans opacity-30">cm</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="lg:col-span-8 flex flex-col items-center justify-center min-h-[850px] bg-white bg-opacity-90 backdrop-blur-md rounded-[48px] border border-white shadow-2xl p-12 relative overflow-hidden sartorial-grid">
+                            <div className="relative flex items-end justify-center gap-24 h-full w-full pt-16">
+                                <div className="flex flex-col items-center relative">
+                                    <div style={{ height: `${height * scale}px` }} className="relative flex flex-col items-center mannequin-shadow">
+                                        <svg width="120" height={height * scale} viewBox={`0 0 120 ${height * scale}`} fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="50" y="0" width="20" height="10" rx="5" fill="#8B5E3C" />
+                                            <path d="M30 15 C30 15 10 20 10 40 C10 80 30 140 30 160 C30 180 40 190 60 190 C80 190 90 180 90 160 C90 140 110 80 110 40 C110 20 90 15 90 15 L30 15Z" fill="#E9DCC9" stroke="#3D342D" strokeWidth="0.5" strokeDasharray="2 2" />
+                                            <rect x="58" y="190" width="4" height={height * scale - 190} fill="#8B5E3C" fillOpacity="0.8" />
+                                            <rect x="35" y={height * scale - 10} width="50" height="4" rx="2" fill="#8B5E3C" />
+                                        </svg>
+                                        <div className="absolute -left-20 top-1/2 -translate-y-1/2 text-sm font-serif italic text-brand-accent opacity-60 rotate-90">{height} CM</div>
+                                    </div>
+                                    <p className="mt-10 text-[11px] font-bold tracking-[0.4em] opacity-30 uppercase">Manichino</p>
+                                </div>
+
+                                <div className="flex flex-col items-center relative">
+                                    <div style={{ width: `${dimensions.width * scale * 0.6}px`, height: `${dimensions.handleDrop * scale}px` }} className="border-[4px] border-brand-accent rounded-t-full mb-[-4px] relative z-20" />
+                                    <div style={{ width: `${dimensions.width * scale}px`, height: `${dimensions.height * scale}px` }} className="bg-brand-accent rounded-sm shadow-2xl relative z-10 border border-brand-accent border-opacity-30">
+                                        <div className="absolute bottom-6 left-6 text-white opacity-40 font-serif text-[12px] tracking-[0.3em] italic uppercase">Atelier</div>
+                                    </div>
+                                    <p className="mt-10 text-[11px] font-bold tracking-[0.4em] text-brand-accent uppercase">{style}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
